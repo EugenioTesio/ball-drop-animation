@@ -1,4 +1,4 @@
-# ball_drop_animation
+# Ball Drop Animation
 
 ![ball-drop-animated](https://github.com/EugenioTesio/ball-drop-animation/assets/5660624/c006ed9a-24bd-41c2-886e-bd3555e5c21e)
 
