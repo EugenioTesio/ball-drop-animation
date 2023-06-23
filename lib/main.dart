@@ -15,9 +15,6 @@ class MainApp extends StatefulWidget {
 }
 
 class _MainAppState extends State<MainApp> with TickerProviderStateMixin {
-  final _width = 50.0;
-  final _height = 50.0;
-
   bool _needRepaint = false;
   bool _isAnimationInProgress = false;
   Offset? _centerOffset;
@@ -45,7 +42,7 @@ class _MainAppState extends State<MainApp> with TickerProviderStateMixin {
               width: canvasSize.width,
               child: GestureDetector(
                 onPanStart: (details) {
-                  // activate drag and drop only if the animation is not
+                  // pick the ball only if the animation is not
                   // in progress and the user hits upon the ball
                   if (_isAnimationInProgress == false &&
                       (circleShape.hitTest(details.localPosition) ?? false)) {
@@ -69,18 +66,16 @@ class _MainAppState extends State<MainApp> with TickerProviderStateMixin {
                   if (_isAnimationInProgress == false && _needRepaint) {
                     _runAnimation(
                       details.velocity.pixelsPerSecond,
-                      Size(_width, _height),
+                      const Size(50, 50),
                       canvasSize,
                     );
                   }
                 },
-                child: SizedBox.expand(
-                  child: ColoredBox(
-                    color: Colors.amber,
-                    child: CustomPaint(
-                      foregroundPainter: circleShape,
-                      size: canvasSize,
-                    ),
+                child: ColoredBox(
+                  color: Colors.amber,
+                  child: CustomPaint(
+                    foregroundPainter: circleShape,
+                    size: canvasSize,
                   ),
                 ),
               ),
@@ -135,7 +130,7 @@ class _MainAppState extends State<MainApp> with TickerProviderStateMixin {
 
         // check if should bounce on the canvas left bound
         if (_centerOffset!.dx - objectSize.width / 2 < 0) {
-          direction = (-direction) - pi;
+          direction = pi - direction;
           _centerOffset = Offset(
             objectSize.width / 2,
             _centerOffset!.dy,
@@ -151,7 +146,7 @@ class _MainAppState extends State<MainApp> with TickerProviderStateMixin {
         }
         // check if should bounce on the canvas right bound
         if (_centerOffset!.dx + objectSize.width / 2 > canvasSize.width) {
-          direction = (-direction) - pi;
+          direction = pi - direction;
           _centerOffset = Offset(
             canvasSize.width - objectSize.width / 2,
             _centerOffset!.dy,
