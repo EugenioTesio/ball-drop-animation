@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 
@@ -125,6 +127,39 @@ class _MainAppState extends State<MainApp> with TickerProviderStateMixin {
 
         // update walkedDistance to get the differentialOffset in next frame
         walkedDistance = controller.value;
+
+        // check if should bounce on the canvas left bound
+        if (_centerOffset!.dx - objectSize.width / 2 < 0) {
+          direction = pi - direction;
+          _centerOffset = Offset(
+            objectSize.width / 2,
+            _centerOffset!.dy,
+          );
+        }
+        // check if should bounce on the canvas top bound
+        if (_centerOffset!.dy - objectSize.height / 2 < 0) {
+          direction = -direction;
+          _centerOffset = Offset(
+            _centerOffset!.dx,
+            objectSize.height / 2,
+          );
+        }
+        // check if should bounce on the canvas right bound
+        if (_centerOffset!.dx + objectSize.width / 2 > canvasSize.width) {
+          direction = pi - direction;
+          _centerOffset = Offset(
+            canvasSize.width - objectSize.width / 2,
+            _centerOffset!.dy,
+          );
+        }
+        // check if should bounce on the canvas bottom bound
+        if (_centerOffset!.dy + objectSize.height / 2 > canvasSize.height) {
+          direction = -direction;
+          _centerOffset = Offset(
+            _centerOffset!.dx,
+            canvasSize.height - objectSize.height / 2,
+          );
+        }
       });
     });
 
