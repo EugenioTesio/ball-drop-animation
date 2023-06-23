@@ -12,13 +12,13 @@ class MainApp extends StatefulWidget {
 }
 
 class _MainAppState extends State<MainApp> {
-  final bool _needRepaint = false;
+  bool _needRepaint = false;
+  final bool _isAnimationInProgress = false;
   Offset? _centerOffset;
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: "Throw the ball animation",
       home: Builder(builder: (context) {
         // set the canvas size to the whole screen
         final canvasSize = MediaQuery.of(context).size;
@@ -37,11 +37,32 @@ class _MainAppState extends State<MainApp> {
             child: SizedBox(
               height: canvasSize.height,
               width: canvasSize.width,
-              child: ColoredBox(
-                color: Colors.amber,
-                child: CustomPaint(
-                  foregroundPainter: circleShape,
-                  size: canvasSize,
+              child: GestureDetector(
+                onPanStart: (details) {
+                  // pick the ball only if the animation is not
+                  // in progress and the user hits upon the ball
+                  if (_isAnimationInProgress == false &&
+                      (circleShape.hitTest(details.localPosition) ?? false)) {
+                    setState(() {
+                      _needRepaint = true;
+                    });
+                  }
+                },
+                onPanUpdate: (details) {
+                  // prevent to set a new center position for hits out of
+                  // the ball bounds and if the animation is in progress as well
+                  if (_isAnimationInProgress == false && _needRepaint) {
+                    setState(() {
+                      _centerOffset = details.localPosition;
+                    });
+                  }
+                },
+                child: ColoredBox(
+                  color: Colors.amber,
+                  child: CustomPaint(
+                    foregroundPainter: circleShape,
+                    size: canvasSize,
+                  ),
                 ),
               ),
             ),
@@ -80,4 +101,17 @@ class CircleShape extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => needRepaint;
+
+  @override
+  bool? hitTest(Offset position) {
+    // Calculate the distance between the position and the center of the circle
+    final distance = (position - center).distance;
+
+    // Check if the distance is within the radius of the circle
+    if (distance <= radius) {
+      return true;
+    } else {
+      return false;
+    }
+  }
 }
