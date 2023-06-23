@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/physics.dart';
 
 void main() {
   runApp(const MainApp());
@@ -11,9 +12,9 @@ class MainApp extends StatefulWidget {
   State<MainApp> createState() => _MainAppState();
 }
 
-class _MainAppState extends State<MainApp> {
+class _MainAppState extends State<MainApp> with TickerProviderStateMixin {
   bool _needRepaint = false;
-  final bool _isAnimationInProgress = false;
+  bool _isAnimationInProgress = false;
   Offset? _centerOffset;
 
   @override
@@ -57,6 +58,17 @@ class _MainAppState extends State<MainApp> {
                     });
                   }
                 },
+                onPanEnd: (details) {
+                  // prevent to set a new center position for hits out of
+                  // the ball bounds and if the animation is in progress as well
+                  if (_isAnimationInProgress == false && _needRepaint) {
+                    _runAnimation(
+                      details.velocity.pixelsPerSecond,
+                      const Size(50, 50),
+                      canvasSize,
+                    );
+                  }
+                },
                 child: ColoredBox(
                   color: Colors.amber,
                   child: CustomPaint(
@@ -70,6 +82,60 @@ class _MainAppState extends State<MainApp> {
         );
       }),
     );
+  }
+
+  /// Calculates and runs a [SpringSimulation].
+  void _runAnimation(
+    Offset pixelsPerSecond,
+    Size objectSize,
+    Size canvasSize,
+  ) {
+    _isAnimationInProgress = true;
+
+    // create an unbounded because physis simulations don't have bounds
+    final controller = AnimationController.unbounded(
+      vsync: this,
+    );
+
+    final velocityPixelsPerSecond = pixelsPerSecond.distance;
+
+    // creates a FrictionSimulation. The drag parameter goes from 1 (infinite
+    // friction) to 0 (none friction). The position parameter tell the flutter
+    // engine in witch point should start to refresh the UI; e.g. if the
+    // velocity is 100 pixel/sec, position is 200 and none friction will start
+    // to send updates on the 2nd sec
+    final simulation = FrictionSimulation(0.05, 0, velocityPixelsPerSecond);
+
+    // the angle in radians from 0 to pi for +y and 0 to -pi for -y
+    var direction = pixelsPerSecond.direction;
+
+    // as the controller always increment the value this variable is needed
+    // to get the differential increment
+    var walkedDistance = 0.0;
+
+    controller.addListener(() {
+      setState(() {
+        // differential offset is the incremental point from the last frame
+        final differentialOffset =
+            Offset.fromDirection(direction, controller.value - walkedDistance);
+
+        // calculates the new center with the given increment
+        _centerOffset = Offset(_centerOffset!.dx + differentialOffset.dx,
+            _centerOffset!.dy + differentialOffset.dy);
+
+        // update walkedDistance to get the differentialOffset in next frame
+        walkedDistance = controller.value;
+      });
+    });
+
+    // run the animation and dispose the controller when finish
+    controller.animateWith(simulation).whenComplete(() {
+      setState(() {
+        _needRepaint = false;
+        _isAnimationInProgress = false;
+        controller.dispose();
+      });
+    });
   }
 }
 
